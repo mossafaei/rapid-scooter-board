@@ -57,10 +57,11 @@ void M365::getStats(stats_t * oldStats){
 }
 
 void M365::send(){
+
     static uint8_t messageType = 0;
     uint8_t brake = getBrake();
     uint8_t speed = getThrottle();
-    //Serial.println(speed);
+
     if(!isConnected()){
       messageType = 4;
     }
@@ -103,6 +104,7 @@ void M365::send(){
     		break;
         }
     }
+    
 }
 void M365::addSum(uint8_t * message, uint8_t size){
     unsigned long cksm = 0;

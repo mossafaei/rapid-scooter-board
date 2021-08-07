@@ -16,13 +16,14 @@
 String scooterID = SCOOTER_ID;
 String scooterToken = SECRET_TOKEN;
 String UserNumber = "1";
-String scooterLongtiude="0",scooterLatitude="0";
-unsigned long ServerDelay=4;
-int ServerSwitch=0;
+String scooterLongtiude = "0", scooterLatitude = "0";
+
+unsigned long ServerDelay = 4;
+int ServerSwitch = 0;
 M365 scooter;
 command_t command;
 stats_t stats;
-Timer tim,sendDataToServerTimer;
+Timer tim, sendDataToServerTimer;
 
 TinyGPSPlus gps;
 
@@ -30,7 +31,7 @@ GSMClient net;
 MQTTClient client;
 GPRS gprs;
 GSM gsmAccess;
-char server[] = "185.81.99.239";
+char server[] = "YOUR_IP_ADDRESS";
 String content[] = {"id=0&","longtiude=0&","latitude=0&","battery=0&","lock=0&","velocity=0"};
 
 Uart gpsSerial (&sercom3, 0, 1, SERCOM_RX_PAD_1, UART_TX_PAD_0);
@@ -38,12 +39,14 @@ Uart gpsSerial (&sercom3, 0, 1, SERCOM_RX_PAD_1, UART_TX_PAD_0);
 static unsigned long turn = 0;
 ////////////////////////////////////
 
-
+//This function runs when the board get a new message form server
 void messageReceived(String &topic, String &payload){
+
     Serial.println("incoming: " + topic + " - " + payload);
-    String buff="";
+    String buff = "";
+
     if (payload && payload.length() > 0){
-        for (int i=0;i<payload.length();i++){
+        for (int i=0 ; i < payload.length() ; i++){
             if (payload[i] != '=')
                 buff += payload[i];
             else break;
@@ -60,9 +63,12 @@ void messageReceived(String &topic, String &payload){
     scooter.setCommand(&command);
     scooter.setScooterLock();
     scooter.setScooterTail();
+
 }
 
+//Prepare for connecting to server
 void setupClient(){
+
     client.begin(server,net);
     client.onMessage(messageReceived);
     bool connected = false;
@@ -84,42 +90,56 @@ void setupClient(){
 
     Serial.println("\nconnected!");
     client.subscribe("/scooter/admin/A1111");
+
 }
 
+//Convert Uint8 to String
 String convertUnit8ToString(uint8_t str){return String(str);}
+
+//Constructing response message for sending to server
 void constructPathString(String id,String longtiude,String latitude,uint8_t battery,uint8_t lock,uint8_t velocity){
+
     content[0] = "id="+id+"&";
     content[1] = "longtiude="+longtiude+"&";
     content[2] = "latitude="+latitude+"&";
     content[3] = "battery="+convertUnit8ToString(battery)+"&";
     content[4] = "lock="+convertUnit8ToString(lock) + "&";
     content[5] = "velocity=" +convertUnit8ToString(velocity);
+
 }
 
 
 String getNumber(String s){
-  String ans="";
-  for (int i=2;i<s.length();i++){
+
+  String ans = "";
+  for (int i=2 ; i < s.length() ; i++){
       if (s[i] == '"')return ans;
       ans += s[i];
-  }     
+  }
+
 }
+
+//Send data to server
 void sendDataToServer(){
-  //if (ServerDelay <= 3)return;
-  constructPathString(scooterID,scooterLongtiude,scooterLatitude,stats.battery,stats.lock,stats.velocity);
-  client.publish("/scooter/A1111",content[0]+content[1]+content[2]+content[3]+content[4]+content[5]);
-  //ServerDelay=0;
+
+  constructPathString(scooterID, scooterLongtiude, scooterLatitude, stats.battery, stats.lock, stats.velocity);
+  client.publish("/scooter/A1111", content[0] + content[1] + content[2] + content[3] + content[4] + content[5] );
+  
   scooter.setScooterLock();
   scooter.setScooterTail();
+
 }
 
 ///////////////////////////////////
 
+//Send data to scooter's motor
 void SendDataToScooter(){
   scooter.send();
   scooter.process();
   scooter.getStats(&stats);
 }
+
+//To prevent scooter from sleep
 /*void keepturnon(){
     if (UserNumber != "0"){
         if (stats.eco == 1 || stats.eco == 3){
@@ -147,6 +167,7 @@ void SendDataToScooter(){
     
 }*/
 
+//Read GPS data from module
 void readGPSData(){
     while (gpsSerial.available() > 0){
       if (gps.encode(gpsSerial.read()) && gps.location.isValid()){
@@ -157,6 +178,7 @@ void readGPSData(){
 }
 
 void setup(){
+
     Serial.begin(9600);
     gpsSerial.begin(9600);
     pinPeripheral(0, PIO_SERCOM); //GPS: Assign TX function to pin 0
@@ -171,12 +193,14 @@ void setup(){
     sendDataToServerTimer.setInterval(3000);
     sendDataToServerTimer.setCallback(sendDataToServer);
     
-    scooter.setup(SerialScooter, A5, A4, 2, 5, 4, 3, 6, 7,ServerSwitch,tim);
+    scooter.setup(SerialScooter, A5, A4, 2, 5, 4, 3, 6, 7, ServerSwitch, tim);
 
     sendDataToServerTimer.start();
     
 }
+
 void loop(){
+
     scooter.updateTimer();
     client.loop();
     if (!client.connected())
@@ -186,11 +210,12 @@ void loop(){
     readGPSData();
     static unsigned long loopDelay = 0;
     if(millis() - loopDelay > 1000){
-        //ServerDelay++;
-        //turn++;
         loopDelay = millis();
     }
+
 }
+
+//Setup SERCOM3 for gpsSerial
 void SERCOM3_Handler(){
   gpsSerial.IrqHandler();
 }
