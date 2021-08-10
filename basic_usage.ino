@@ -36,7 +36,7 @@ String content[] = {"id=0&","longtiude=0&","latitude=0&","battery=0&","lock=0&",
 
 Uart gpsSerial (&sercom3, 0, 1, SERCOM_RX_PAD_1, UART_TX_PAD_0);
 
-static unsigned long turn = 0;
+unsigned int turn = 0;
 ////////////////////////////////////
 
 //This function runs when the board get a new message form server
@@ -73,7 +73,7 @@ void setupClient(){
     client.onMessage(messageReceived);
     bool connected = false;
     while (!connected){
-      if ((gsmAccess.begin() == GSM_READY) && (gprs.attachGPRS("mtnirancell","","") == GPRS_READY)){
+      if ((gsmAccess.begin() == GSM_READY) && (gprs.attachGPRS("mtnirancell","","") == GPRS_READY)){ //for MTN IranCell use mtnirancell
           connected = true;
           Serial.println("GSM CONNECTED");
       }
@@ -94,17 +94,17 @@ void setupClient(){
 }
 
 //Convert Uint8 to String
-String convertUnit8ToString(uint8_t str){return String(str);}
+String convertUint8ToString(uint8_t str){return String(str);}
 
 //Constructing response message for sending to server
-void constructPathString(String id,String longtiude,String latitude,uint8_t battery,uint8_t lock,uint8_t velocity){
+void constructPathString(String id, String longtiude, String latitude, uint8_t battery, uint8_t lock, uint8_t velocity){
 
-    content[0] = "id="+id+"&";
-    content[1] = "longtiude="+longtiude+"&";
-    content[2] = "latitude="+latitude+"&";
-    content[3] = "battery="+convertUnit8ToString(battery)+"&";
-    content[4] = "lock="+convertUnit8ToString(lock) + "&";
-    content[5] = "velocity=" +convertUnit8ToString(velocity);
+    content[0] = "id=" + id + "&";
+    content[1] = "longtiude=" + longtiude + "&";
+    content[2] = "latitude=" + latitude + "&";
+    content[3] = "battery=" + convertUint8ToString(battery) + "&";
+    content[4] = "lock=" + convertUint8ToString(lock) + "&";
+    content[5] = "velocity=" + convertUint8ToString(velocity);
 
 }
 
@@ -184,7 +184,6 @@ void setup(){
     pinPeripheral(0, PIO_SERCOM); //GPS: Assign TX function to pin 0
     pinPeripheral(1, PIO_SERCOM); //GPS: Assign RX function to pin 1
 
-    //MODEM.setTimer(&tim);
     setupClient();
     
     tim.setInterval(20);
