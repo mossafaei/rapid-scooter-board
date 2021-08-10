@@ -184,7 +184,7 @@ void setup(){
     pinPeripheral(0, PIO_SERCOM); //GPS: Assign TX function to pin 0
     pinPeripheral(1, PIO_SERCOM); //GPS: Assign RX function to pin 1
 
-    MODEM.setTimer(&tim);
+    //MODEM.setTimer(&tim);
     setupClient();
     
     tim.setInterval(20);
